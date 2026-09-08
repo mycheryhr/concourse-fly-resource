@@ -57,6 +57,9 @@ jobs:
             type=ref,event=tag
             type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
 
+      # Aliyun ACR rejects OCI image indexes: buildx's default provenance
+      # attestation adds an application/vnd.oci.empty.v1+json descriptor that
+      # the registry refuses. Disable attestations and emit Docker media types.
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -65,6 +68,9 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          sbom: false
+          outputs: type=image,oci-mediatypes=false,push=${{ github.event_name != 'pull_request' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
