@@ -73,6 +73,9 @@ while read $READSWITCH line; do
   )
 done <<< "$expanded_options"
 
-jq -n "{
-  version: {}
+# Concourse 8.3+ rejects empty versions: a put must emit at least one key-value
+# pair. A nanosecond timestamp also keeps every put a distinct version, so the
+# implicit get is never skipped as a duplicate.
+jq -n --arg ts "$(date +%s%N)" "{
+  version: { ts: \$ts }
 }" >&3

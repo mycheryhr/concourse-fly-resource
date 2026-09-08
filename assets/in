@@ -1,2 +1,16 @@
 #!/bin/sh
-echo '{"version":{}}'
+
+set -e
+
+exec 3>&1 # make stdout available as fd 3 for the result
+exec 1>&2 # redirect all output to stderr for logging
+
+# The implicit get after a put must echo back the requested version verbatim,
+# otherwise Concourse reports a version mismatch. Fall back to an empty object
+# only when invoked without a version (e.g. a bare get of this resource).
+payload=$(mktemp /tmp/fly-resource-request.XXXXXX)
+cat > "$payload" <&0
+
+jq -n --argjson version "$(jq -c '.version // {}' < "$payload")" "{
+  version: \$version
+}" >&3
